@@ -2,195 +2,153 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>For You ❤️</title>
+<title>For Her ❤️</title>
 
 <style>
 body {
   margin: 0;
-  font-family: sans-serif;
-  background: radial-gradient(circle, #3a003a, #000);
-  color: white;
+  background: black;
   overflow: hidden;
-  text-align: center;
-}
-
-/* screens */
-.screen {
-  display: none;
-  height: 100vh;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  animation: fade 1s;
-}
-
-.active {
-  display: flex;
-}
-
-@keyframes fade {
-  from {opacity:0; transform:scale(0.9);}
-  to {opacity:1; transform:scale(1);}
-}
-
-/* button */
-button {
-  padding: 12px 25px;
-  border-radius: 25px;
-  border: none;
-  background: linear-gradient(45deg, #ff4d88, #ff0066);
+  font-family: Arial;
   color: white;
-  font-size: 16px;
-  margin-top: 20px;
-  cursor: pointer;
 }
 
-/* gif */
-.gif {
-  width: 120px;
-  border-radius: 50%;
-  box-shadow: 0 0 30px pink;
-}
-
-/* hearts */
-.heart {
+#startHeart {
   position: absolute;
-  color: pink;
-  animation: float 5s linear infinite;
-}
-
-@keyframes float {
-  0% {transform: translateY(100vh); opacity:1;}
-  100% {transform: translateY(-10vh); opacity:0;}
-}
-
-/* reveal boxes */
-.box {
-  width: 80%;
-  padding: 15px;
-  margin: 10px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.1);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 60px;
   cursor: pointer;
-  transition: 0.3s;
+  animation: glow 1.5s infinite alternate;
 }
 
-/* hidden initially */
-.hidden-text {
-  opacity: 0;
+@keyframes glow {
+  from { text-shadow: 0 0 10px pink; }
+  to { text-shadow: 0 0 25px red; }
 }
 
-/* typing */
-#typed {
-  width: 80%;
-  margin-top: 20px;
+canvas {
+  display: none;
 }
 
+#text {
+  position: absolute;
+  left: 50px;
+  top: 40%;
+  width: 300px;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+#gif {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+}
 </style>
 </head>
 
 <body>
 
-<!-- music -->
-<audio autoplay loop>
-  <source src="music.mp3" type="audio/mp3">
-</audio>
+<div id="startHeart">💗</div>
 
-<!-- SCREEN 1 -->
-<div class="screen active" id="s1">
-  <img src="cute3.gif" class="gif">
-  <h1>Hey Miss Bhuviii💖</h1>
-  <button onclick="next(2)">Let's Check...😉</button>
-</div>
+<canvas id="canvas"></canvas>
 
-<!-- SCREEN 2 -->
-<div class="screen" id="s2">
-  <h2>ₘₑₐₛᵤᵣᵢₙg yₒᵤᵣ cᵤₜₑₙₑₛₛ... ⏳ ⱼₒ ₖᵢ ₜᵤ ₙₕᵢ ₕₐᵢ pₕᵣ bₕᵢ 😂</h2>
-  <h1 id="percent">0%</h1>
-  <button onclick="next(3)" id="nextBtn" style="display:none;">Continue →</button>
-</div>
+<div id="text"></div>
 
-<!-- SCREEN 3 -->
-<div class="screen" id="s3">
-  <h2>Tap each one ❤️</h2>
+<img id="gif" src="https://media.giphy.com/media/MDJ9IbxxvDUQM/giphy.gif" width="200">
 
-  <div class="box" onclick="reveal(this)">
-    <span class="hidden-text">Uhh aree my best frnd forever ♾️ 💕</span>
-  </div>
-
-  <div class="box" onclick="reveal(this)">
-    <span class="hidden-text"> Or tu bhens hai 🐃</span>
-  </div>
-
-  <div class="box" onclick="reveal(this)">
-    <span class="hidden-text">Gadhi Bhiiii 😂</span>
-  </div>
-
-  <button onclick="next(4)">See more →</button>
-</div>
-
-<!-- SCREEN 4 -->
-<div class="screen" id="s4">
-   <img src="cute.gif2" class="gif">
-  <h2>𝙰 𝚕𝚒𝚝𝚝𝚕𝚎 𝚗𝚘𝚝𝚎 𝚏𝚘𝚛 𝚞𝚑𝚑 ✉️</h2>
-  <button onclick="startTyping()">Tap to open chudail</button>
-  <p id="typed"></p>
-</div>
+<!-- 🎵 MUSIC -->
+<audio id="music" src="https://www2.cs.uic.edu/~i101/SoundFiles/StarWars60.wav"></audio>
 
 <script>
+const heart = document.getElementById("startHeart");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const textDiv = document.getElementById("text");
+const gif = document.getElementById("gif");
+const music = document.getElementById("music");
 
-// screen switch
-function next(n){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById("s"+n).classList.add("active");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-  if(n==2) loading();
+let particles = [];
+
+heart.onclick = () => {
+  heart.style.display = "none";
+  canvas.style.display = "block";
+
+  music.play(); // 🎵 music start
+
+  startAnimation();
+  typeText();
+};
+
+function createHeart(x, y) {
+  return {
+    x: x,
+    y: y,
+    size: Math.random() * 6 + 2,
+    speedY: Math.random() * 2 + 1
+  };
 }
 
-// loading %
-function loading(){
-  let i=0;
-  let int=setInterval(()=>{
-    i++;
-    document.getElementById("percent").innerText=i+"%";
-    if(i>=100){
-      clearInterval(int);
-      document.getElementById("nextBtn").style.display="block";
+function drawHeart(x, y, size) {
+  ctx.fillStyle = "pink";
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.bezierCurveTo(x - size, y - size, x - size*2, y + size, x, y + size*2);
+  ctx.bezierCurveTo(x + size*2, y + size, x + size, y - size, x, y);
+  ctx.fill();
+}
+
+function getTreeShape(t) {
+  let x = canvas.width/2 + 200 * Math.sin(t);
+  let y = canvas.height/2 - 200 * Math.cos(t);
+  return {x, y};
+}
+
+function startAnimation() {
+  function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    for(let i=0;i<5;i++){
+      let pos = getTreeShape(Math.random()*Math.PI*2);
+      particles.push(createHeart(pos.x, pos.y));
     }
-  },30);
+
+    particles.forEach((p)=>{
+      p.y += p.speedY;
+      drawHeart(p.x, p.y, p.size);
+    });
+
+    requestAnimationFrame(animate);
+  }
+  animate();
 }
 
-// reveal text smoothly
-function reveal(el){
-  let span = el.querySelector("span");
-  span.style.opacity = 1;
+const message = `Hey you 💖
+Happy Birthday 🎉
+May God bless you 🌸
+And give you many happiness 💕
+Just saying... I love you ❤️`;
+
+function typeText() {
+  let i = 0;
+  function typing() {
+    if(i < message.length){
+      textDiv.innerHTML += message.charAt(i);
+      i++;
+      setTimeout(typing, 40);
+    } else {
+      gif.style.display = "block";
+    }
+  }
+  typing();
 }
-
-// typing effect
-function startTyping(){
-  let text="𝖩𝖺𝖺𝗄𝖾 𝗉𝖺𝖽𝗁 𝗅𝖾𝖾 𝖻𝗁𝖾𝗇𝗌 𝗑𝗆 𝖺𝖺 𝗋𝖺𝗁𝖾 𝗁𝖺𝗂 𝗍𝖾𝗋𝖾 𝗌𝖺𝗋𝖺 𝖽𝗂𝗄 𝖻𝗌𝗌 𝖻𝖺𝗄𝗂𝗍𝗂 𝗄𝗋𝗏𝖺 𝗅𝗈𝗈𝗈𝗈.......𝗁𝖾𝗁𝖾𝗁𝗁𝖾..😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂";
-  let i=0;
-
-  let int=setInterval(()=>{
-    document.getElementById("typed").innerHTML += text[i]
-    i++;
-    if(i>=text.length) clearInterval(int);
-  },50);
-}
-
-// floating hearts
-setInterval(()=>{
-  let heart=document.createElement("div");
-  heart.className="heart";
-  heart.innerHTML="❤️";
-  heart.style.left=Math.random()*100+"vw";
-  heart.style.fontSize=(Math.random()*20+10)+"px";
-  document.body.appendChild(heart);
-
-  setTimeout(()=>heart.remove(),5000);
-},300);
-
 </script>
 
 </body>
